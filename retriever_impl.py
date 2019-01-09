@@ -10,20 +10,28 @@ class RetrieverImpl(Retriever):
     >>> URL = 'http://example.com'
     >>> loop = asyncio.get_event_loop()
     >>> retriever = RetrieverImpl(loop)
-    >>> future = retriever.retrieve_batch([URL] * 2, lambda url, content: print(url, content))
-    >>> loop.run_until_complete(future) # doctest: +ELLIPSIS
+    >>> cb = lambda url, content: print(url, content)
+    >>> loop.run_until_complete(retriever.retrieve_batch([URL] * 2, cb)) # doctest: +ELLIPSIS
     http://example.com b'...Example Domain...'
     http://example.com b'...Example Domain...'
+    >>> loop.run_until_complete(retriever.retrieve_batch(['http://'], cb))
+    http:// None
+    >>> loop.run_until_complete(retriever.retrieve_batch(['h'], cb))
+    h None
     >>> loop.close()
     """
     def __init__(self, loop: AbstractEventLoop, executor: Executor = None):
-        self._loop = loop
         self._executor = executor
+        super().__init__(loop)
 
     async def _retrieve(self, url):
-        response = await self._loop.run_in_executor(self._executor, requests.get, url)
-        # TODO: error handling
-        return response.content
+        try:
+            response = await self._loop.run_in_executor(self._executor, requests.get, url)
+            content = response.content
+        except Exception:
+            return None
+
+        return content if content else None
 
 
 if __name__ == "__main__":
