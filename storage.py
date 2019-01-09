@@ -5,6 +5,9 @@ import asyncio
 
 class Storage(ABC):
 
+    def __init__(self, loop: asyncio.AbstractEventLoop = None):
+        self._loop = loop
+
     @abstractmethod
     async def _store(self, content: bytes) -> str:
         pass
@@ -15,4 +18,4 @@ class Storage(ABC):
 
     async def store_batch(self, contents: Iterable[bytes], on_each_complete: Callable[[bytes, str], None]):
         batch = (self._store_each(content, on_each_complete) for content in contents)
-        await asyncio.gather(*batch, return_exceptions=True)
+        await asyncio.gather(*batch, loop=self._loop, return_exceptions=True)

@@ -17,18 +17,20 @@ class StorageImgur(Storage):
     >>> config = configparser.ConfigParser()
     >>> _ = config.read('config.ini')
 
-    >>> async def test_storage_imgur(config, loop, contents):
-    ...     storage = await StorageImgur.create(config, loop)
-    ...     await storage.store_batch(contents, lambda _, url_new: print(url_new))
-
     >>> import asyncio
     >>> loop = asyncio.get_event_loop()
-    >>> loop.run_until_complete(test_storage_imgur(config, loop, [img_output.getvalue()]*2)) # doctest: +ELLIPSIS
+    >>> storage = loop.run_until_complete(StorageImgur.create(config, loop))
+    >>> cb = lambda _, url_new: print(url_new)
+
+    >>> loop.run_until_complete(storage.store_batch([img_output.getvalue()]*2, cb)) # doctest: +ELLIPSIS
     http...
     http...
+    >>> loop.run_until_complete(storage.store_batch(['abc'.encode()], cb))
+    None
+    >>> loop.run_until_complete(storage.store_batch([None], cb))
+    None
     >>> loop.close()
     """
-
     @classmethod
     async def create(cls, config, loop: AbstractEventLoop, executor: Executor = None):
         client_id = config.get('credentials_imgur', 'client_id')
@@ -41,19 +43,21 @@ class StorageImgur(Storage):
     def __init__(self, client, loop, executor):
         self._client = client
         self._executor = executor
-        self._loop = loop
+        super().__init__(loop)
 
     async def _store(self, content):
-        b64 = base64.b64encode(content)
+        try:
+            b64 = base64.b64encode(content)
+            data = {
+                'image': b64,
+                'type': 'base64',
+            }
+            response = await self._loop.run_in_executor(self._executor, self._client.make_request, 'POST', 'upload', data)
+            url = response['link']
+        except Exception:
+            return None
 
-        data = {
-            'image': b64,
-            'type': 'base64',
-        }
-
-        response = await self._loop.run_in_executor(self._executor, self._client.make_request, 'POST', 'upload', data)
-        # TODO: error handling
-        return response['link']
+        return url if url else None
 
 
 if __name__ == "__main__":
