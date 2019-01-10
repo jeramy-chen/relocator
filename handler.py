@@ -81,7 +81,7 @@ class Handlers:
         return web.json_response(data)
 
     async def _report_uploaded(self, _: web.Request):
-        logger.info('Got a request')
+        logger.debug('Got a request')
         reloc = itertools.chain.from_iterable(job.relocation for job in self._relocator.status.jobs)
         data = response_format.format_uploaded_list(reloc)
         return web.json_response(data)
