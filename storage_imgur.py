@@ -2,11 +2,17 @@ import base64
 from asyncio import AbstractEventLoop
 from concurrent.futures import Executor
 from imgurpython import ImgurClient
+
+from logger import create_logger
 from storage import Storage
+
+logger = create_logger(__name__)
 
 
 class StorageImgur(Storage):
     """
+    >>> from logging import CRITICAL
+    >>> logger = create_logger(__name__, CRITICAL)
     >>> from PIL import Image
     >>> from io import BytesIO
     >>> img = Image.new('RGB', (100, 100), 255)
@@ -54,7 +60,8 @@ class StorageImgur(Storage):
             }
             response = await self._loop.run_in_executor(self._executor, self._client.make_request, 'POST', 'upload', data)
             url = response['link']
-        except Exception:
+        except Exception as e:
+            logger.error(str(e))
             return None
 
         return url if url else None

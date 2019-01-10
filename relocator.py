@@ -2,9 +2,13 @@ import asyncio
 from uuid import UUID
 from typing import Iterable
 import copy
+
+from logger import create_logger
 from record import JobRecords
 from storage import Storage
 from retriever import Retriever
+
+logger = create_logger(__name__)
 
 
 class Relocator:
@@ -45,14 +49,17 @@ class Relocator:
         job_id = self._jobs.create_job(urls_unique)
         batch = self._retriever.retrieve_batch(urls_unique, lambda url, content: self._on_retrieved(job_id, url, content))
         asyncio.ensure_future(batch, loop=self._loop)
+        logger.debug('Started retriever for {}, {} url'.format(str(job_id), len(urls_unique)))
         return job_id
 
     def _on_retrieved(self, job_id, url: str, content: bytes):
+        logger.debug('Retrieved {} bytes: {}, {}'.format(len(content), str(job_id), url))
         if not content:
             self._jobs.commit(job_id, url, None)
         else:
             batch = self._storage.store_batch([content], lambda _, url_new: self._jobs.commit(job_id, url, url_new))
             asyncio.ensure_future(batch, loop=self._loop)
+            logger.debug('Started storage')
 
     @property
     def status(self) -> JobRecords:

@@ -1,11 +1,17 @@
 from asyncio import AbstractEventLoop
 from concurrent.futures import Executor
 import requests
+
+from logger import create_logger
 from retriever import Retriever
+
+logger = create_logger(__name__)
 
 
 class RetrieverImpl(Retriever):
     """
+    >>> from logging import CRITICAL
+    >>> logger = create_logger(__name__, CRITICAL)
     >>> import asyncio
     >>> URL = 'http://example.com'
     >>> loop = asyncio.get_event_loop()
@@ -28,7 +34,8 @@ class RetrieverImpl(Retriever):
         try:
             response = await self._loop.run_in_executor(self._executor, requests.get, url)
             content = response.content
-        except Exception:
+        except Exception as e:
+            logger.error(str(e))
             return None
 
         return content if content else None
