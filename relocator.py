@@ -54,10 +54,11 @@ class Relocator:
         return job_id
 
     def _on_retrieved(self, job_id, url: str, content: bytes):
-        _logger.debug('Retrieved {} bytes: {}, {}'.format(len(content), str(job_id), url))
         if not content:
+            _logger.debug('Retrieved nothing: {}, {}'.format(str(job_id), url))
             self._jobs.commit(job_id, url, None)
         else:
+            _logger.debug('Retrieved {} bytes: {}, {}'.format(len(content), str(job_id), url))
             batch = self._storage.store_batch([content], lambda _, url_new: self._jobs.commit(job_id, url, url_new))
             asyncio.ensure_future(batch, loop=self._loop)
             _logger.debug('Started storage')
