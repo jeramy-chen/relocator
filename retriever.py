@@ -2,9 +2,9 @@ from abc import ABC, abstractmethod
 from typing import Iterable, Callable
 import asyncio
 
-from logger import create_logger
+from logger import init_logger
 
-logger = create_logger(__name__)
+_logger = init_logger(__name__)
 
 
 class Retriever(ABC):
@@ -18,7 +18,7 @@ class Retriever(ABC):
 
     async def _retrieve_each(self, url: str, on_each_complete: Callable[[str, bytes], None]):
         content = await self._retrieve(url)
-        logger.debug(url)
+        _logger.debug(url)
         on_each_complete(url, content)
 
     async def retrieve_batch(self, urls: Iterable[str], on_each_complete: Callable[[str, bytes], None]):

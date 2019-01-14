@@ -2,9 +2,9 @@ from abc import ABC, abstractmethod
 from typing import Iterable, Callable
 import asyncio
 
-from logger import create_logger
+from logger import init_logger
 
-logger = create_logger(__name__)
+_logger = init_logger(__name__)
 
 
 class Storage(ABC):
@@ -18,7 +18,7 @@ class Storage(ABC):
 
     async def _store_each(self, content: bytes, on_each_complete: Callable[[bytes, str], None]):
         url = await self._store(content)
-        logger.debug(url)
+        _logger.debug(url)
         on_each_complete(content, url)
 
     async def store_batch(self, contents: Iterable[bytes], on_each_complete: Callable[[bytes, str], None]):

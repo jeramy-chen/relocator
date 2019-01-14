@@ -3,9 +3,9 @@ from datetime import datetime
 import uuid
 import copy
 
-from logger import create_logger
+from logger import init_logger
 
-logger = create_logger(__name__)
+_logger = init_logger(__name__)
 
 
 class RelocationRecord:
@@ -147,7 +147,7 @@ class JobRecord:
 class JobRecords:
     """
     >>> from logging import CRITICAL
-    >>> logger = create_logger(__name__, CRITICAL)
+    >>> _ = init_logger(__name__, CRITICAL)
     >>> jobs = JobRecords()
     >>> job1 = jobs.create_job(['a', 'b'])
     >>> job2 = jobs.create_job(['c', 'd', 'e'])
@@ -177,7 +177,7 @@ class JobRecords:
         job_id = uuid.uuid4()
         job = JobRecord(job_id, datetime.utcnow(), urls)
         self._jobs[job_id] = job
-        logger.info('Created job: {}'.format(str(job_id)))
+        _logger.info('Created job: {}'.format(str(job_id)))
         return job_id
 
     def commit(self, job_id: uuid.UUID, url_old: str, url_new: str = None):
@@ -188,7 +188,7 @@ class JobRecords:
         :return:
         """
         self._jobs[job_id].commit(datetime.utcnow(), url_old, url_new)
-        logger.info('Committed job: {}, {} -> {}'.format(str(job_id), url_old, url_new))
+        _logger.info('Committed job: {}, {} -> {}'.format(str(job_id), url_old, url_new))
 
     def query_job(self, job_id: uuid.UUID) -> JobRecord:
         return copy.deepcopy(self._jobs[job_id])
